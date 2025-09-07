@@ -1,108 +1,108 @@
 import React, { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
+import FeatureLayout from './FeatureLayout';
+import FileUpload from './FileUpload'; // or your preferred file input component
+import DownloadButton from './DownloadButton';
 
 export default function CompressPDF() {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [compressionLevel, setCompressionLevel] = useState('medium');
   const [compressedPdfUrl, setCompressedPdfUrl] = useState(null);
   const [error, setError] = useState(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [compressionLevel, setCompressionLevel] = useState('medium'); // low, medium, high
 
-  // Handle file input (only single PDF)
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+  const handleFilesChange = (selectedFiles) => {
+    const file = selectedFiles[0];
     if (!file || file.type !== 'application/pdf') {
-      setError('Please select a PDF file');
+      setError('Please select a valid PDF file');
+      setFiles([]);
+      setCompressedPdfUrl(null);
       return;
     }
     setError(null);
-    setSelectedFile(file);
+    setFiles(selectedFiles);
     setCompressedPdfUrl(null);
   };
 
-  // Compression simulation by re-embedding images with reduced quality (basic)
+  const removeFile = (fileName) => {
+    setFiles((prevFiles) => prevFiles.filter((f) => f.name !== fileName));
+    setCompressedPdfUrl(null);
+  };
+
   const compressPdf = async () => {
-    if (!selectedFile) {
+    if (files.length === 0) {
       setError('Please select a PDF file');
       return;
     }
     setError(null);
     setIsCompressing(true);
-
     try {
-      const fileBytes = await selectedFile.arrayBuffer();
+      const file = files[0];
+      const fileBytes = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(fileBytes);
-      const pages = pdfDoc.getPages();
+      
+      // Note: pdf-lib does not truly compress; this is a placeholder
+      const compressedBytes = await pdfDoc.save();
 
-      // For demonstration, reduce image quality could be simulated by extracting images,
-      // resizing or recompressing (this is complex, so here we only re-save without changes)
-
-      // You could add image extraction and recompression here if needed
-
-      const compressedPdfBytes = await pdfDoc.save();
-
-      const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
+      const blob = new Blob([compressedBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       setCompressedPdfUrl(url);
     } catch (e) {
       console.error(e);
-      setError('Compression failed. Try a simpler PDF.');
+      setError('Compression failed. Please try a different file.');
+      setCompressedPdfUrl(null);
     } finally {
       setIsCompressing(false);
     }
   };
 
   return (
-    <div style={{ marginTop: 40 }}>
-      <h2>Compress PDF (Basic)</h2>
+    <FeatureLayout title="Compress PDF">
+      {files.length > 0 && (
+        <ul className="uploaded-files-list">
+          {files.map((file) => (
+            <li key={file.name}>
+              {file.name}{' '}
+              <button className="file-remove-btn" onClick={() => removeFile(file.name)} aria-label={`Remove file ${file.name}`}>
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
-      <input
-        type="file"
-        accept="application/pdf"
-        onChange={handleFileChange}
-      />
+      <FileUpload accept="application/pdf" multiple={false} onFilesChange={handleFilesChange} />
 
-      {selectedFile && <p style={{ marginTop: 8 }}>Selected file: {selectedFile.name}</p>}
-
-      <label style={{ display: 'block', marginTop: 15 }}>
-        Compression level:
-        <select
-          value={compressionLevel}
-          onChange={(e) => setCompressionLevel(e.target.value)}
-          style={{ marginLeft: 10, padding: 6 }}
-          disabled={isCompressing}
-        >
-          <option value="low">Low (Low quality)</option>
-          <option value="medium">Medium</option>
-          <option value="high">High (Best quality)</option>
-        </select>
-      </label>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <button
-        onClick={compressPdf}
+      <label htmlFor="compressionLevel">Compression Level:</label>
+      <select
+        id="compressionLevel"
+        value={compressionLevel}
+        onChange={(e) => setCompressionLevel(e.target.value)}
         disabled={isCompressing}
         style={{
-          marginTop: 12,
-          backgroundColor: isCompressing ? '#aaa' : '#6200ee',
-          color: 'white',
-          border: 'none',
-          padding: '10px 20px',
-          borderRadius: 6,
-          cursor: isCompressing ? 'not-allowed' : 'pointer',
+          marginTop: 8,
+          width: '100%',
+          padding: '8px 12px',
+          borderRadius: 10,
+          borderColor: 'var(--primary)',
         }}
       >
+        <option value="low">Low (Low quality)</option>
+        <option value="medium">Medium</option>
+        <option value="high">High (Best quality)</option>
+      </select>
+
+      {error && <p style={{ color: 'red', marginTop: '1em' }}>{error}</p>}
+
+      <button onClick={compressPdf} disabled={isCompressing} style={{ marginTop: '1em' }}>
         {isCompressing ? 'Compressing...' : 'Compress PDF'}
       </button>
 
       {compressedPdfUrl && (
-        <div style={{ marginTop: 20 }}>
-          <a href={compressedPdfUrl} download="compressed.pdf" style={{ color: '#6200ee' }}>
-            Download Compressed PDF
-          </a>
-        </div>
+        <DownloadButton url={compressedPdfUrl} filename="compressed.pdf">
+          Download Compressed PDF
+        </DownloadButton>
       )}
-    </div>
+    </FeatureLayout>
   );
 }

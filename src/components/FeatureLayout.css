@@ -1,0 +1,30 @@
+.feature-page {
+  max-width: 680px;
+  margin: 2rem auto 3rem auto;
+  padding: 1.8rem 2.2rem;
+  background: var(--card-bg);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px var(--primary);
+  color: var(--text-color);
+}
+
+.feature-page h2 {
+  color: var(--primary);
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.back-home {
+  text-decoration: none;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+.back-home:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}

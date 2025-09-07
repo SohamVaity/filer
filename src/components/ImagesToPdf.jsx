@@ -1,42 +1,45 @@
 import React, { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
+import FeatureLayout from './FeatureLayout';
+import FileDropZone from './FileDropZone';
+import DownloadButton from './DownloadButton';
 
 export default function ImagesToPdf() {
-  const [images, setImages] = useState([]);
+  const [files, setFiles] = useState([]);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Handle image file inputs (jpg/png)
-  const handleFileChange = (event) => {
-    const selectedFiles = Array.from(event.target.files).filter(file =>
-      file.type === 'image/jpeg' || file.type === 'image/png'
+  const handleFilesChange = (selectedFiles) => {
+    const filtered = Array.from(selectedFiles).filter(
+      (file) => file.type === 'image/jpeg' || file.type === 'image/png'
     );
-
-    if (selectedFiles.length === 0) {
+    if (filtered.length === 0) {
       setError('Please select JPG or PNG image files');
+      setFiles([]);
+      setPdfUrl(null);
       return;
     }
-
     setError(null);
-    setImages(selectedFiles);
+    setFiles(filtered);
     setPdfUrl(null);
   };
 
-  // Convert images to PDF
+  const removeFile = (fileName) => {
+    setFiles((prev) => prev.filter((f) => f.name !== fileName));
+    setPdfUrl(null);
+  };
+
   const convertImagesToPdf = async () => {
-    if (images.length === 0) {
+    if (files.length === 0) {
       setError('Please select images before converting.');
       return;
     }
-
     setError(null);
     setIsProcessing(true);
-
     try {
       const pdfDoc = await PDFDocument.create();
-
-      for (const imgFile of images) {
+      for (const imgFile of files) {
         const imgBytes = await imgFile.arrayBuffer();
         let image;
         if (imgFile.type === 'image/png') {
@@ -44,21 +47,12 @@ export default function ImagesToPdf() {
         } else {
           image = await pdfDoc.embedJpg(imgBytes);
         }
-
         const page = pdfDoc.addPage([image.width, image.height]);
-        page.drawImage(image, {
-          x: 0,
-          y: 0,
-          width: image.width,
-          height: image.height,
-        });
+        page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
       }
-
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
-
+      setPdfUrl(URL.createObjectURL(blob));
     } catch (e) {
       console.error(e);
       setError('Failed to convert images to PDF.');
@@ -68,52 +62,33 @@ export default function ImagesToPdf() {
   };
 
   return (
-    <div style={{ marginTop: 40 }}>
-      <h2>Images to PDF</h2>
-
-      <input
-        type="file"
-        multiple
-        accept="image/jpeg,image/png"
-        onChange={handleFileChange}
-      />
-
-      {images.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <h4>Selected Images:</h4>
-          <ul>
-            {images.map((img, idx) => (
-              <li key={idx}>{img.name}</li>
-            ))}
-          </ul>
-        </div>
+    <FeatureLayout title="Images to PDF">
+      {files.length > 0 && (
+        <ul className="uploaded-files-list">
+          {files.map((file) => (
+            <li key={file.name}>
+              {file.name}{' '}
+              <button className="file-remove-btn" onClick={() => removeFile(file.name)} aria-label={`Remove file ${file.name}`}>
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <FileDropZone accept="image/png,image/jpeg" multiple onFilesChange={handleFilesChange} />
 
-      <button
-        onClick={convertImagesToPdf}
-        disabled={isProcessing}
-        style={{
-          marginTop: 12,
-          backgroundColor: isProcessing ? '#aaa' : '#6200ee',
-          color: 'white',
-          border: 'none',
-          padding: '10px 20px',
-          borderRadius: 6,
-          cursor: isProcessing ? 'not-allowed' : 'pointer',
-        }}
-      >
+      {error && <p style={{ color: 'red', marginTop: '1em' }}>{error}</p>}
+
+      <button onClick={convertImagesToPdf} disabled={isProcessing} style={{ marginTop: '1em' }}>
         {isProcessing ? 'Converting...' : 'Convert to PDF'}
       </button>
 
       {pdfUrl && (
-        <div style={{ marginTop: 20 }}>
-          <a href={pdfUrl} download="images.pdf" style={{ color: '#6200ee' }}>
-            Download PDF
-          </a>
-        </div>
+        <DownloadButton url={pdfUrl} filename="converted.pdf">
+          Download PDF
+        </DownloadButton>
       )}
-    </div>
+    </FeatureLayout>
   );
 }
