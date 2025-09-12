@@ -46,17 +46,19 @@ function Home() {
   );
 }
 
+
 export default function App() {
   const [darkMode, setDarkMode] = useState(false);
 
-  // Apply dark mode class to body
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark-mode");
-    } else {
-      document.body.classList.remove("dark-mode");
-    }
-  }, [darkMode]);
+// Should enable light mode when darkMode is false
+useEffect(() => {
+  if (darkMode) {
+    document.body.classList.remove("light-mode");
+  } else {
+    document.body.classList.add("light-mode");
+  }
+}, [darkMode]);
+
 
   return (
     <Router>
@@ -83,6 +85,10 @@ export default function App() {
           {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
         </button>
       </div>
+      <div className="app-footer">
+  Made By Soham Vaity
+</div>
+
     </Router>
   );
 }

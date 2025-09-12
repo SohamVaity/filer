@@ -17,8 +17,8 @@
 
 /* Light mode overrides */
 body.light-mode {
-  --bkg: #fffacf;
-  --card-bkg: #f7fff7;
+  --bkg: #fff48f;
+  --card-bkg: #62a362;
   --text: #000000;
   --input-bg: #ffffff;
   --input-text: #181a18;
@@ -163,7 +163,7 @@ h2 {
 }
 
 .back-home:hover {
-  color: var(--primary-hover) !important;
+  color: #89ff6b !important;
   text-decoration: underline;
 }
 
@@ -333,7 +333,6 @@ body.light-mode select option {
   color: #000;
 }
 
-/* Footer bottom right text */
 .app-footer {
   position: fixed;
   bottom: 16px;
