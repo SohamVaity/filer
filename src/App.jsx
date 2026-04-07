@@ -3,92 +3,180 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Link,
   Navigate,
+  Link,
 } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import "./App.css";
 
 // Feature components imports
 import MergePDF from "./components/MergePDF";
 import SplitPDF from "./components/SplitPDF";
 import CompressPDF from "./components/CompressPDF";
-import PdfToImages from "./components/PdfToImages";
 import ImagesToPdf from "./components/ImagesToPdf";
 import OCR from "./components/OCR";
 import WatermarkPDF from "./components/WatermarkPDF";
-import PdfToWord from "./components/PdfToWord";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import ProtectedRoute from "./components/ProtectedRoute";
+import ViewUploads from "./components/ViewUploads";
 
 function Home() {
+  const { user, signOut, isConfigured } = useAuth();
   const features = [
     { path: "/merge", label: "Merge PDFs", icon: "📎" },
     { path: "/split", label: "Split PDF", icon: "✂️" },
     { path: "/compress", label: "Compress PDF", icon: "🗜️" },
-    { path: "/pdf2img", label: "PDF to Images", icon: "🖼️" },
     { path: "/img2pdf", label: "Images to PDF", icon: "🖨️" },
     { path: "/ocr", label: "OCR (Image to Text)", icon: "🔎" },
     { path: "/watermark", label: "Watermark PDF", icon: "💧" },
-    { path: "/pdftoword", label: "PDF to Word (.docx)", icon: "📝" },
+    { path: "/uploads", label: "View Uploads", icon: "📂" },
   ];
 
   return (
     <div className="home-container">
-      <h1>Filer</h1>
-      <h2>A Multi PDF Toolkit</h2>
+      <div className="home-header">
+        <h1>Filer</h1>
+        <p className="home-tagline">Your Professional PDF Toolkit</p>
+      </div>
+
+      {user && (
+        <div className="user-info">
+          <span className="user-email">{user.email}</span>
+          <button onClick={() => signOut()} className="logout-button">
+            Sign Out
+          </button>
+        </div>
+      )}
+
+      {!isConfigured && (
+        <div className="demo-mode-banner">
+          <span className="banner-icon">⚠️</span>
+          <span><strong>Demo Mode:</strong> Supabase not configured. Sign in with any credentials to test.</span>
+          <a href="https://github.com/your-repo/filer#setup" target="_blank" rel="noopener noreferrer" className="banner-link">Setup Guide →</a>
+        </div>
+      )}
+
       <div className="feature-tiles">
         {features.map(({ path, label, icon }) => (
-          <Link key={path} to={path} className="feature-card">
-            <span className="tile-icon">{icon}</span>
-            <span className="tile-label">{label}</span>
-          </Link>
+          <ProtectedRoute key={path}>
+            <Link to={path} className="feature-card">
+              <span className="tile-icon">{icon}</span>
+              <span className="tile-label">{label}</span>
+            </Link>
+          </ProtectedRoute>
         ))}
       </div>
     </div>
   );
 }
 
-
 export default function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
-// Should enable light mode when darkMode is false
-useEffect(() => {
-  if (darkMode) {
-    document.body.classList.remove("light-mode");
-  } else {
-    document.body.classList.add("light-mode");
-  }
-}, [darkMode]);
-
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.remove("light-mode");
+    } else {
+      document.body.classList.add("light-mode");
+    }
+  }, [darkMode]);
 
   return (
     <Router>
-      <div className="app-container">
-        {/* Routes */}
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/merge" element={<MergePDF />} />
-          <Route path="/split" element={<SplitPDF />} />
-          <Route path="/compress" element={<CompressPDF />} />
-          <Route path="/pdf2img" element={<PdfToImages />} />
-          <Route path="/img2pdf" element={<ImagesToPdf />} />
-          <Route path="/ocr" element={<OCR />} />
-          <Route path="/watermark" element={<WatermarkPDF />} />
-          <Route path="/pdftoword" element={<PdfToWord />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+      <AuthProvider>
+        <div className="app-container">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/merge"
+              element={
+                <ProtectedRoute>
+                  <MergePDF />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/split"
+              element={
+                <ProtectedRoute>
+                  <SplitPDF />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/compress"
+              element={
+                <ProtectedRoute>
+                  <CompressPDF />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/img2pdf"
+              element={
+                <ProtectedRoute>
+                  <ImagesToPdf />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ocr"
+              element={
+                <ProtectedRoute>
+                  <OCR />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/watermark"
+              element={
+                <ProtectedRoute>
+                  <WatermarkPDF />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/uploads"
+              element={
+                <ProtectedRoute>
+                  <ViewUploads />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
 
-        {/* Dark mode toggle button */}
-        <button
-          className="dark-mode-toggle"
-          onClick={() => setDarkMode(!darkMode)}
-        >
-          {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-        </button>
-      </div>
-      <div className="app-footer">
-  Made By Soham Vaity
-</div>
-
+          {/* Theme toggle button */}
+          <button
+            className="theme-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+            aria-label="Toggle theme"
+          >
+            {darkMode ? (
+              <span className="toggle-content">
+                <span className="toggle-icon">☀️</span>
+                <span className="toggle-text">Light</span>
+              </span>
+            ) : (
+              <span className="toggle-content">
+                <span className="toggle-icon">🌙</span>
+                <span className="toggle-text">Dark</span>
+              </span>
+            )}
+          </button>
+        </div>
+        <div className="app-footer">v0.2</div>
+      </AuthProvider>
     </Router>
   );
 }

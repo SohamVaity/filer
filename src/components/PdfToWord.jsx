@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import FeatureLayout from './FeatureLayout';
 import FileDropZone from './FileDropZone';
 import DownloadButton from './DownloadButton';
@@ -12,7 +12,9 @@ export default function PdfToWord() {
   const [extractedText, setExtractedText] = useState('');
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [wordUrl, setWordUrl] = useState(null);
+  const [filename, setFilename] = useState('');
 
   const handleFilesChange = (newFiles) => {
     const file = newFiles[0];
@@ -25,14 +27,17 @@ export default function PdfToWord() {
     }
     setError(null);
     setFiles(newFiles);
+    setFilename(file.name.replace('.pdf', ''));
     setExtractedText('');
     setWordUrl(null);
+    setProgress(0);
   };
 
   const removeFile = (fileName) => {
     setFiles((prev) => prev.filter((f) => f.name !== fileName));
     setExtractedText('');
     setWordUrl(null);
+    setProgress(0);
   };
 
   const convertPdfToWord = async () => {
@@ -44,39 +49,87 @@ export default function PdfToWord() {
     setIsProcessing(true);
     setExtractedText('');
     setWordUrl(null);
+    setProgress(0);
+
     try {
       const arrayBuffer = await files[0].arrayBuffer();
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
       const numPages = pdf.numPages;
       let allText = '';
+      const paragraphs = [];
+
+      // Add title
+      paragraphs.push(
+        new Paragraph({
+          text: `Converted from: ${files[0].name}`,
+          heading: HeadingLevel.HEADING_1,
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 400 },
+        })
+      );
+
       for (let i = 1; i <= numPages; i++) {
+        setProgress(Math.round((i / numPages) * 100));
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item) => item.str).join(' ');
-        allText += pageText + "\n\n";
+
+        // Better text extraction with positioning awareness
+        const pageText = textContent.items
+          .map((item) => item.str)
+          .filter((str) => str.trim() !== '')
+          .join(' ');
+
+        if (pageText.trim()) {
+          allText += `--- Page ${i} ---\n${pageText}\n\n`;
+
+          paragraphs.push(
+            new Paragraph({
+              text: `Page ${i}`,
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 200, after: 100 },
+            })
+          );
+
+          // Split into lines for better formatting
+          const lines = pageText.split(/\n|(?<=\. )/).filter(l => l.trim());
+          lines.forEach((line) => {
+            if (line.trim()) {
+              paragraphs.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: line.trim(),
+                      size: 24, // 12pt
+                    }),
+                  ],
+                  spacing: { after: 100 },
+                })
+              );
+            }
+          });
+        }
       }
+
       setExtractedText(allText);
 
       // Build Word doc with docx library
       const doc = new Document({
         sections: [
           {
-            children: allText.split("\n").map(line =>
-              new Paragraph({
-                children: [new TextRun(line)]
-              })
-            )
-          }
+            properties: {},
+            children: paragraphs,
+          },
         ],
       });
 
       const blob = await Packer.toBlob(doc);
       const url = URL.createObjectURL(blob);
       setWordUrl(url);
+      setProgress(100);
     } catch (e) {
-      console.error("PDF to Word conversion error:", e);
-      setError("Failed to convert PDF to Word.");
+      console.error('PDF to Word conversion error:', e);
+      setError('Failed to convert PDF to Word. The PDF might be scanned or image-based.');
     } finally {
       setIsProcessing(false);
     }
@@ -84,38 +137,62 @@ export default function PdfToWord() {
 
   return (
     <FeatureLayout title="PDF to Word">
-      {files.length > 0 && (
-        <ul className="uploaded-files-list">
-          {files.map(file => (
-            <li key={file.name}>
-              {file.name}{' '}
-              <button className="file-remove-btn" onClick={() => removeFile(file.name)} aria-label={`Remove file ${file.name}`}>
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="feature-content">
+        <div className="upload-section">
+          <FileDropZone accept=".pdf,application/pdf" multiple={false} onFilesChange={handleFilesChange} />
+        </div>
 
-      <FileDropZone accept="application/pdf" multiple={false} onFilesChange={handleFilesChange} />
+        {files.length > 0 && (
+          <div className="file-info-card">
+            <div className="file-info">
+              <span className="file-icon">📄</span>
+              <span className="file-name">{files[0].name}</span>
+            </div>
+            <button className="file-remove-btn" onClick={() => removeFile(files[0].name)} aria-label="Remove file">
+              ×
+            </button>
+          </div>
+        )}
 
-      <button onClick={convertPdfToWord} disabled={isProcessing} style={{ marginTop: '1em' }}>
-        {isProcessing ? 'Converting...' : 'Convert to Word'}
-      </button>
+        <button
+          onClick={convertPdfToWord}
+          disabled={isProcessing || files.length === 0}
+          className="convert-button"
+        >
+          {isProcessing ? `Converting... ${progress}%` : 'Convert to Word'}
+        </button>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+        {isProcessing && (
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+            </div>
+          </div>
+        )}
 
-      <textarea
-        value={extractedText}
-        onChange={e => setExtractedText(e.target.value)}
-        style={{ width: '100%', height: 300, marginTop: 20, padding: 10, borderRadius: 8, borderColor: 'var(--primary)', fontFamily: 'monospace' }}
-      />
+        {error && <div className="error-message">{error}</div>}
 
-      {wordUrl && (
-        <DownloadButton url={wordUrl} filename="converted.docx">
-          Download Word Document
-        </DownloadButton>
-      )}
+        {wordUrl && (
+          <div className="success-section">
+            <div className="success-icon">✅</div>
+            <h3>Conversion Complete!</h3>
+            <DownloadButton url={wordUrl} filename={`${filename || 'converted'}.docx`}>
+              📥 Download Word Document
+            </DownloadButton>
+          </div>
+        )}
+
+        {extractedText && (
+          <div className="preview-section">
+            <h4>Preview Extracted Text:</h4>
+            <textarea
+              value={extractedText}
+              readOnly
+              className="text-preview"
+            />
+          </div>
+        )}
+      </div>
     </FeatureLayout>
   );
 }

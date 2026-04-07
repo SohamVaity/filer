@@ -78,9 +78,9 @@ export default function ImagesToPdf() {
 
       <FileDropZone accept="image/png,image/jpeg" multiple onFilesChange={handleFilesChange} />
 
-      {error && <p style={{ color: 'red', marginTop: '1em' }}>{error}</p>}
+      {error && <div className="error-message">{error}</div>}
 
-      <button onClick={convertImagesToPdf} disabled={isProcessing} style={{ marginTop: '1em' }}>
+      <button className="convert-button" onClick={convertImagesToPdf} disabled={isProcessing}>
         {isProcessing ? 'Converting...' : 'Convert to PDF'}
       </button>
 

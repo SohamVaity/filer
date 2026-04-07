@@ -84,31 +84,41 @@ export default function OCR() {
   return (
     <FeatureLayout title="OCR (Image to Text)">
       {imageFile && (
-        <div>
-          <p>{imageFile.name} <button onClick={() => removeFile(imageFile.name)} aria-label={`Remove file ${imageFile.name}`}>×</button></p>
-        </div>
+        <ul className="uploaded-files-list" style={{ marginTop: 10 }}>
+          <li>
+            <span>{imageFile.name}</span>
+            <button
+              type="button"
+              className="file-remove-btn"
+              aria-label={`Remove file ${imageFile.name}`}
+              onClick={() => removeFile(imageFile.name)}
+            >
+              ×
+            </button>
+          </li>
+        </ul>
       )}
 
       <FileDropZone accept="image/png,image/jpeg" multiple={false} onFilesChange={handleFilesChange} />
 
-      <button onClick={runOcr} disabled={isProcessing} style={{ marginTop: '1em' }}>
+      <button className="convert-button" onClick={runOcr} disabled={isProcessing}>
         {isProcessing ? 'Processing...' : 'Start OCR'}
       </button>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <div className="error-message">{error}</div>}
 
       <textarea
         value={ocrText}
         onChange={(e) => setOcrText(e.target.value)}
         placeholder="OCR result text here. You can edit this text."
-        style={{ width: '100%', height: 320, marginTop: 20, padding: 10, borderRadius: 8, borderColor: 'var(--primary)', fontFamily: 'monospace', resize: 'vertical' }}
+        className="text-preview"
       />
 
-      <div style={{ marginTop: 10 }}>
-        <button onClick={downloadAsDocx} disabled={!ocrText} style={{ marginRight: 10 }}>
+      <div className="download-buttons" style={{ marginTop: 10 }}>
+        <button className="convert-button" onClick={downloadAsDocx} disabled={!ocrText}>
           Download as Word (.docx)
         </button>
-        <button onClick={downloadAsPdf} disabled={!ocrText}>
+        <button className="convert-button" onClick={downloadAsPdf} disabled={!ocrText}>
           Download as PDF (.pdf)
         </button>
       </div>

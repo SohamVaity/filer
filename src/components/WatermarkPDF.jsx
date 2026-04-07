@@ -114,19 +114,19 @@ export default function WatermarkPDF() {
         </ul>
       )}
 
-      <label style={{ marginTop: 15, display: 'block' }}>
+      <label className="watermark-label">
         Watermark Text:
         <input
           type="text"
           value={watermarkText}
           onChange={e => setWatermarkText(e.target.value)}
           placeholder="Enter watermark text"
-          style={{ marginTop: 6, width: '100%', padding: 8, borderRadius: 8, borderColor: 'var(--primary)' }}
+          className="watermark-input"
           disabled={isProcessing}
         />
       </label>
 
-      <label style={{ marginTop: 15, display: 'block' }}>
+      <label className="watermark-label">
         Font Size:
         <input
           type="number"
@@ -134,23 +134,23 @@ export default function WatermarkPDF() {
           max="150"
           value={fontSize}
           onChange={e => setFontSize(Number(e.target.value))}
-          style={{ marginTop: 6, width: '100%', padding: 8, borderRadius: 8, borderColor: 'var(--primary)' }}
+          className="watermark-input"
           disabled={isProcessing}
         />
       </label>
 
-      <label style={{ marginTop: 15, display: 'block' }}>
+      <label className="watermark-label">
         Watermark Color:
         <input
           type="color"
           value={color}
           onChange={e => setColor(e.target.value)}
-          style={{ marginTop: 6, width: '100%', height: 40, borderRadius: 8, borderColor: 'var(--primary)' }}
+          className="color-input"
           disabled={isProcessing}
         />
       </label>
 
-      <label style={{ marginTop: 15, display: 'block' }}>
+      <label className="watermark-label">
         Rotation Angle (degrees):
         <input
           type="range"
@@ -158,13 +158,13 @@ export default function WatermarkPDF() {
           max="180"
           value={rotation}
           onChange={e => setRotation(Number(e.target.value))}
-          style={{ marginTop: 6, width: '100%' }}
+          className="range-input"
           disabled={isProcessing}
         />
-        <div style={{ textAlign: 'center' }}>{rotation}°</div>
+        <div className="range-value">{rotation}°</div>
       </label>
 
-      <label style={{ marginTop: 15, display: 'block' }}>
+      <label className="watermark-label">
         Opacity:
         <input
           type="range"
@@ -173,28 +173,18 @@ export default function WatermarkPDF() {
           step="0.05"
           value={opacity}
           onChange={e => setOpacity(parseFloat(e.target.value))}
-          style={{ marginTop: 6, width: '100%' }}
+          className="range-input"
           disabled={isProcessing}
         />
-        <div style={{ textAlign: 'center' }}>{(opacity * 100).toFixed(0)}%</div>
+        <div className="range-value">{(opacity * 100).toFixed(0)}%</div>
       </label>
 
-      {error && <p style={{ color: 'var(--primary)', marginTop: 12 }}>{error}</p>}
+      {error && <div className="error-message">{error}</div>}
 
       <button
+        className="convert-button"
         onClick={addWatermark}
         disabled={isProcessing}
-        style={{
-          marginTop: 20,
-          backgroundColor: isProcessing ? '#aaa' : 'var(--primary)',
-          color: '#111',
-          border: 'none',
-          padding: '12px 24px',
-          borderRadius: 30,
-          fontWeight: '700',
-          cursor: isProcessing ? 'not-allowed' : 'pointer',
-          width: '100%',
-        }}
       >
         {isProcessing ? 'Processing...' : 'Add Watermark'}
       </button>

@@ -73,28 +73,22 @@ export default function CompressPDF() {
 
       <FileUpload accept="application/pdf" multiple={false} onFilesChange={handleFilesChange} />
 
-      <label htmlFor="compressionLevel">Compression Level:</label>
+      <label htmlFor="compressionLevel" style={{ display: 'block', marginBottom: 8 }}>Compression Level:</label>
       <select
         id="compressionLevel"
         value={compressionLevel}
         onChange={(e) => setCompressionLevel(e.target.value)}
         disabled={isCompressing}
-        style={{
-          marginTop: 8,
-          width: '100%',
-          padding: '8px 12px',
-          borderRadius: 10,
-          borderColor: 'var(--primary)',
-        }}
+        className="compression-select"
       >
         <option value="low">Low (Low quality)</option>
         <option value="medium">Medium</option>
         <option value="high">High (Best quality)</option>
       </select>
 
-      {error && <p style={{ color: 'red', marginTop: '1em' }}>{error}</p>}
+      {error && <div className="error-message">{error}</div>}
 
-      <button onClick={compressPdf} disabled={isCompressing} style={{ marginTop: '1em' }}>
+      <button className="convert-button" onClick={compressPdf} disabled={isCompressing}>
         {isCompressing ? 'Compressing...' : 'Compress PDF'}
       </button>
 

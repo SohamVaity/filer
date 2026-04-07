@@ -1,0 +1,47 @@
+.download-button {
+  display: inline-block;
+  background: var(--primary) !important;
+  color: #151e17 !important;
+  font-weight: 700 !important;
+  padding: 16px 40px !important;
+  border: none !important;
+  border-radius: 100px !important;
+  font-size: 1.1rem !important;
+  text-decoration: none;
+  user-select: none;
+  cursor: pointer !important;
+  transition: all 0.3s ease;
+  font-family: var(--font-main) !important;
+  box-shadow: 0 4px 15px rgba(149, 245, 148, 0.3);
+  position: relative;
+  overflow: hidden;
+  margin: 0.5rem 0 !important;
+}
+
+.download-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.download-button:hover::before {
+  width: 400px;
+  height: 400px;
+}
+
+.download-button:hover {
+  background: var(--primary-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(149, 245, 148, 0.5);
+}
+
+.download-button:active {
+  transform: translateY(-1px);
+}

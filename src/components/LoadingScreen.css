@@ -1,0 +1,25 @@
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bkg);
+}
+
+.loading-spinner-large {
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.loading-icon {
+  font-size: 4rem;
+  display: block;
+  animation: float 2s ease-in-out infinite;
+}
+
+.loading-spinner-large p {
+  color: var(--text);
+  font-size: 1.2rem;
+  margin-top: 1rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}

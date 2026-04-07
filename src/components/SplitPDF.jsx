@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import FeatureLayout from './FeatureLayout';
 import FileDropZone from './FileDropZone';
+import { useAuth } from '../context/AuthContext';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
 export default function SplitPDF() {
   const [files, setFiles] = useState([]);
@@ -9,6 +11,7 @@ export default function SplitPDF() {
   const [zipUrl, setZipUrl] = useState(null);
   const [error, setError] = useState(null);
   const [isSplitting, setIsSplitting] = useState(false);
+  const { user } = useAuth();
 
   const handleFilesChange = (newFiles) => {
     const file = newFiles[0];
@@ -96,7 +99,30 @@ export default function SplitPDF() {
       }
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      setZipUrl(URL.createObjectURL(zipBlob));
+      const zipUrlLocal = URL.createObjectURL(zipBlob);
+      setZipUrl(zipUrlLocal);
+
+      // Save to Supabase
+      if (isSupabaseConfigured && user) {
+        const fileName = `split_${Date.now()}.zip`;
+        const { error: uploadError } = await supabase.storage
+          .from('user-files')
+          .upload(`${user.id}/${fileName}`, zipBlob);
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('user-files')
+            .getPublicUrl(`${user.id}/${fileName}`);
+
+          await supabase.from('uploaded_files').insert({
+            user_id: user.id,
+            file_name: fileName,
+            file_type: 'split',
+            file_url: publicUrl,
+            original_files: selectedFile.name,
+          });
+        }
+      }
     } catch (e) {
       console.error('SplitPDF error:', e);
       setError(`Failed to split PDF. ${e?.message || ''}`);
@@ -124,13 +150,13 @@ export default function SplitPDF() {
         placeholder="Enter page ranges separated by commas (e.g. 1-3,5,7-9)"
         value={pageRanges}
         onChange={(e) => setPageRanges(e.target.value)}
-        style={{ marginTop: 8, width: '100%', padding: 8, borderRadius: 8, borderColor: 'var(--primary)' }}
+        className="page-range-input"
         disabled={isSplitting}
       />
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <div className="error-message">{error}</div>}
 
-      <button onClick={splitPdf} disabled={isSplitting} style={{ marginTop: 8 }}>
+      <button className="convert-button" onClick={splitPdf} disabled={isSplitting}>
         {isSplitting ? 'Splitting...' : 'Split PDF'}
       </button>
 
